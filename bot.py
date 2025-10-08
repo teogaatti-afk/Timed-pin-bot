@@ -4,6 +4,7 @@ import asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
+# Получаем токен из Render Environment
 TOKEN = os.getenv("TOKEN")
 
 # Команда /start
@@ -14,14 +15,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Команда /pin
 async def pin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Проверяем, что команда в ответ на сообщение
+    # Проверяем, что команда отправлена в ответ на сообщение
     if not update.message or not update.message.reply_to_message:
         await update.message.reply_text(
             "Эту команду нужно отправлять в ответ на сообщение, которое хочешь закрепить."
         )
         return
 
-    # Парсим время: 10s, 5m, 2h
+    # Разбираем аргумент времени
     duration_text = context.args[0] if context.args else "1m"
     match = re.match(r"(\d+)([smhd])", duration_text)
     if not match:
@@ -45,7 +46,7 @@ async def pin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Ждём указанное время
         await asyncio.sleep(seconds)
 
-        # Открепляем
+        # Открепляем сообщение
         await context.bot.unpin_chat_message(chat_id=update.effective_chat.id)
         await context.bot.send_message(chat_id=update.effective_chat.id, text="Сообщение откреплено.")
     except Exception as e:
@@ -58,5 +59,6 @@ def main():
     app.add_handler(CommandHandler("pin", pin_message))
     app.run_polling()
 
+# Стандартный запуск
 if __name__ == "__main__":
     main()
